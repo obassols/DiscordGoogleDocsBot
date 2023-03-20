@@ -1,3 +1,5 @@
 /node_modules
 .env
-creedentials.json
+credentials.json
+token.json
+doc.json

@@ -1,3 +1,4 @@
+const googleDocsAuth = require('./GoogleDocs/authorize');
 const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js');
 const client = new Client({ intents: [
   GatewayIntentBits.Guilds,
@@ -8,21 +9,14 @@ const client = new Client({ intents: [
 ] });
 require('dotenv').config();
 
-client.on(Events.ClientReady, () => {
+const createMessage = require('./commands/createMessage.js');
+
+client.on(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  // client.user.setActivity('Writing a Google Docs', { type: ActivityType.Playing });
-  /* const channel = client.channels.cache.get('id');
-  console.log(channel);
-  if (channel) channel.send('content'); */
+  await googleDocsAuth.authorize();
+  googleDocsAuth.getDoc();
 });
 
-client.on(Events.MessageCreate, async interaction => {
-  if (interaction.author.bot) return;
-
-  console.log(interaction);
-  if (interaction.content === 'ping') {
-    interaction.reply('Pong!');
-  }
-});
+client.on(Events.MessageCreate, (interaction) =>  createMessage(interaction));
 
 client.login(process.env.BOT_TOKEN);
