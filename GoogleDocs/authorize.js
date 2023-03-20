@@ -3,7 +3,6 @@ const path = require('path');
 const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
-require('dotenv').config();
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/documents'];
@@ -25,8 +24,7 @@ async function loadSavedCredentialsIfExist() {
     const credentials = JSON.parse(content);
     return google.auth.fromJSON(credentials);
   } catch (err) {
-    console.log('No saved credentials found');
-    console.log(err);
+    console.error('No saved credentials found');
     return null;
   }
 }
@@ -75,10 +73,15 @@ async function authorize() {
 
 async function getDoc() {
   const doc = await getDocFromFile();
-  if (doc) {
-    return doc;
+  const now = new Date();
+  let date = new Date();
+  if (doc) date = new Date(doc.headers.date);
+  if (doc && date.getDate() === now.getDate()) {
+    console.log("Using existing document");
+    return doc.data;
   } else {
-    return await createDoc();
+    const createdDoc = await createDoc(now)
+    return createdDoc.data;
   }
 }
 
@@ -88,36 +91,34 @@ async function getDocFromFile() {
     const doc = JSON.parse(content);
     return doc;
   } catch (err) {
-    console.log('No saved document found');
+    console.error('No saved document found');
     return null;
   }
 }
 
 
-async function createDoc() {
+async function createDoc(date) {
   try {
     console.log("Creating document...");
     
     const client = await authorize();
-    console.log(client);
 
     // Create a new Google Docs API client
     const docs = google.docs({ version: 'v1', auth: client });
-    console.log(docs);
 
     // Create a new Google Docs document
     const doc = await docs.documents.create({
       requestBody: {
-        title: 'Discord Logs'
+        title: 'DiscordLogs ' + date.toLocaleDateString()
       }
     });
 
     // Save the document ID
-    fs.writeFile(DOC_PATH, JSON.stringify(doc.data));
+    fs.writeFile(DOC_PATH, JSON.stringify(doc));
 
     // Log the document ID
     console.log(`Created new Google Docs document with ID: ${doc.data.documentId}`);
-    return doc.data;
+    return doc;
   } catch (err) {
     console.error("Error creating document");
     console.error(err);
