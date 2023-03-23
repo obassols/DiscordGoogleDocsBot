@@ -1,11 +1,12 @@
 const fs = require('fs').promises;
 const path = require('path');
 const process = require('process');
-const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
+const { authenticate } = require('@google-cloud/local-auth');
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/documents'];
+const SCOPES = ['https://www.googleapis.com/auth/documents',
+  'https://www.googleapis.com/auth/drive'];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -14,17 +15,17 @@ const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 const DOC_PATH = path.join(process.cwd(), 'doc.json');
 
 /**
- * Reads previously authorized credentials from the save file.
+ * Reads previously authorized token data from the saved file.
  *
  * @return {Promise<OAuth2Client|null>}
  */
-async function loadSavedCredentialsIfExist() {
+async function loadSavedTokenIfExist() {
   try {
     const content = await fs.readFile(TOKEN_PATH);
-    const credentials = JSON.parse(content);
-    return google.auth.fromJSON(credentials);
+    const token = JSON.parse(content);
+    return google.auth.fromJSON(token);
   } catch (err) {
-    console.error('No saved credentials found');
+    console.error('No saved token found');
     return null;
   }
 }
@@ -35,7 +36,7 @@ async function loadSavedCredentialsIfExist() {
  * @param {OAuth2Client} client
  * @return {Promise<void>}
  */
-async function saveCredentials(client) {
+async function saveToken(client) {
   const content = await fs.readFile(CREDENTIALS_PATH);
   const keys = JSON.parse(content);
   const key = keys.installed || keys.web;
@@ -54,18 +55,19 @@ async function saveCredentials(client) {
  */
 async function authorize() {
   console.log('Authorizing...');
-  let client = await loadSavedCredentialsIfExist();
+  let client = await loadSavedTokenIfExist();
   if (client) {
-    console.log('Loaded saved credentials');
+    console.log('Loaded saved token');
     return client;
   }
   client = await authenticate({
     scopes: SCOPES,
     keyfilePath: CREDENTIALS_PATH,
   });
+
   if (client.credentials) {
-    console.log('Saving credentials');
-    await saveCredentials(client);
+    console.log('Saving token');
+    await saveToken(client);
   }
   console.log('Authorized');
   return client;
@@ -115,25 +117,27 @@ async function getDocFromFile() {
  */
 async function createDoc(date) {
   try {
-    console.log("Creating document...");
-    
     const client = await authorize();
+    const drive = google.drive({ version: "v3", auth: client });
+    const fileTitle = 'DiscordLogs ' + date.toLocaleDateString('ca-ES');
+    const fileMetadata = {
+      name: fileTitle,
+      parents: [process.env.FOLDER_ID],
+      mimeType: "application/vnd.google-apps.document"
+    };
 
-    // Create a new Google Docs API client
-    const docs = google.docs({ version: 'v1', auth: client });
-
-    // Create a new Google Docs document
-    const doc = await docs.documents.create({
-      requestBody: {
-        title: 'DiscordLogs ' + date.toLocaleDateString('ca-ES')
-      }
+    const doc = await drive.files.create({
+      requestBody: fileMetadata,
+      fields: "id",
     });
 
     // Save the document ID
     fs.writeFile(DOC_PATH, JSON.stringify(doc));
+    console.log(doc);
 
     // Log the document ID
-    console.log(`Created new Google Docs document with ID: ${doc.data.documentId}`);
+    console.log(`Created new Google Docs document with ID: ${doc.data.id}`);
+
     return doc;
   } catch (err) {
     console.error("Error creating document");

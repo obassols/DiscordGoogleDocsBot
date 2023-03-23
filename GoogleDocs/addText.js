@@ -16,7 +16,7 @@ async function addText(string) {
 
   docs.documents.batchUpdate({
     auth,
-    documentId: doc.documentId,
+    documentId: doc.id,
     requestBody: {
       requests: [
         {
