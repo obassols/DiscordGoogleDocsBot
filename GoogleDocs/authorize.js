@@ -125,7 +125,7 @@ async function createDoc(date) {
     // Create a new Google Docs document
     const doc = await docs.documents.create({
       requestBody: {
-        title: 'DiscordLogs ' + date.toLocaleDateString()
+        title: 'DiscordLogs ' + date.toLocaleDateString('ca-ES')
       }
     });
 

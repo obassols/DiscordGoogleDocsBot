@@ -1,5 +1,5 @@
 const googleDocsAuth = require('./GoogleDocs/authorize');
-const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Events } = require('discord.js');
 const client = new Client({ intents: [
   GatewayIntentBits.Guilds,
   GatewayIntentBits.GuildMessages,
