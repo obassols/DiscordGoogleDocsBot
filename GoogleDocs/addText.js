@@ -1,13 +1,11 @@
-
-const fs = require('fs').promises;
-const path = require('path');
 const { google } = require('googleapis');
 const googleDocsAuth = require('./authorize');
 const { authorize } = require('./authorize');
-const DOC_PATH = path.join(process.cwd(), 'doc.json');
-const SCOPES = ['https://www.googleapis.com/auth/documents'];
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
+/**
+ * Adds text to the google doc.
+ * @param {string} string
+ */
 async function addText(string) {
   const doc = await googleDocsAuth.getDoc();
   const auth = await authorize();

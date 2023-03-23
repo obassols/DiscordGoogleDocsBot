@@ -71,6 +71,11 @@ async function authorize() {
   return client;
 }
 
+/**
+ * Gets the doc from the file or creates a new one if it doesn't exist or is out of date
+ * 
+ * @returns {Promise<google.docs_v1.Schema$Document>}
+ */
 async function getDoc() {
   const doc = await getDocFromFile();
   const now = new Date();
@@ -85,6 +90,11 @@ async function getDoc() {
   }
 }
 
+/**
+ * Gets the doc from the file
+ * 
+ * @returns {Promise<google.docs_v1.Schema$Document>}
+ */
 async function getDocFromFile() {
   try {
     const content = await fs.readFile(DOC_PATH);
@@ -96,7 +106,13 @@ async function getDocFromFile() {
   }
 }
 
-
+/**
+ * Creates a new Google Docs document
+ * 
+ * @param {Date} date
+ * @returns {Promise<google.docs_v1.Schema$Document>}
+ * @throws {Error}
+ */
 async function createDoc(date) {
   try {
     console.log("Creating document...");
